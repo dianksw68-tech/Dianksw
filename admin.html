@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudinary Admin — Kling Motion</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cf0fc;
+    --text: #e8e8f0;
+    --muted: #6a6a8a;
+    --success: #5cfca0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(92,240,252,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%; max-width: 460px;
+    overflow: hidden;
+    position: relative; z-index: 1;
+  }
+  .card-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .card-icon { font-size: 36px; margin-bottom: 12px; }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .card-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .card-body { padding: 28px 32px; }
+  .card-footer {
+    padding: 20px 32px;
+    border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--accent3); }
+  .form-group { margin-bottom: 18px; }
+  .input-wrap { position: relative; }
+  .input-wrap input { padding-right: 70px; }
+  .eye-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted);
+    font-size: 11px; cursor: pointer; font-family: 'DM Mono', monospace;
+    transition: color 0.2s;
+  }
+  .eye-btn:hover { color: var(--text); }
+
+  .btn-save {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    padding: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(92,240,252,0.3); }
+
+  .btn-back {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: var(--accent); color: var(--text); }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid rgba(252,92,92,0.3);
+    border-radius: 10px;
+    color: rgba(252,92,92,0.6);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .btn-logout:hover { border-color: #fc5c5c; color: #fc5c5c; }
+
+  .status-msg {
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    text-align: center;
+    display: none;
+  }
+  .status-msg.success { background: rgba(92,252,160,0.1); color: var(--success); border: 1px solid rgba(92,252,160,0.2); }
+  .status-msg.error { background: rgba(252,92,92,0.1); color: #fc5c5c; border: 1px solid rgba(252,92,92,0.2); }
+  .status-msg.show { display: block; }
+
+  .info-box {
+    background: rgba(92,240,252,0.05);
+    border: 1px solid rgba(92,240,252,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .info-box a { color: var(--accent3); text-decoration: none; }
+  .info-box a:hover { text-decoration: underline; }
+
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">☁</div>
+    <div class="card-title">Cloudinary Admin</div>
+    <p class="card-desc">Configure your Cloudinary credentials for media storage.<br>Saved securely in your browser only.</p>
+  </div>
+
+  <div class="card-body">
+    <div class="info-box">
+      Get your credentials from <a href="https://cloudinary.com/console" target="_blank">cloudinary.com/console</a> → Dashboard.<br>
+      You need: <strong style="color:var(--text)">Cloud Name</strong>, <strong style="color:var(--text)">API Key</strong>, and <strong style="color:var(--text)">API Secret</strong>.
+    </div>
+
+    <div class="form-group">
+      <label>Cloud Name</label>
+      <input type="text" id="cloudName" placeholder="e.g. my-cloud-name">
+    </div>
+
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="text" id="apiKey" placeholder="e.g. 123456789012345">
+    </div>
+
+    <div class="form-group">
+      <label>API Secret</label>
+      <div class="input-wrap">
+        <input type="password" id="apiSecret" placeholder="Your API Secret">
+        <button class="eye-btn" onclick="toggleSecret()">Show</button>
+      </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <div class="card-footer">
+    <button class="btn-save" onclick="saveConfig()">☁ Save Configuration</button>
+    <a href="index.html" class="btn-back">← Back to App</a>
+    <div class="divider"></div>
+    <button class="btn-logout" onclick="clearConfig()">✕ Clear & Logout</button>
+  </div>
+</div>
+
+<script>
+window.onload = () => {
+  const cfg = JSON.parse(localStorage.getItem('cloudinary_config') || '{}');
+  if (cfg.cloudName) document.getElementById('cloudName').value = cfg.cloudName;
+  if (cfg.apiKey) document.getElementById('apiKey').value = cfg.apiKey;
+  if (cfg.apiSecret) document.getElementById('apiSecret').value = cfg.apiSecret;
+};
+
+function toggleSecret() {
+  const input = document.getElementById('apiSecret');
+  const btn = input.parentElement.querySelector('.eye-btn');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Hide'; }
+  else { input.type = 'password'; btn.textContent = 'Show'; }
+}
+
+function saveConfig() {
+  const cloudName = document.getElementById('cloudName').value.trim();
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const apiSecret = document.getElementById('apiSecret').value.trim();
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    showMsg('error', 'Please fill in all three fields.');
+    return;
+  }
+
+  localStorage.setItem('cloudinary_config', JSON.stringify({ cloudName, apiKey, apiSecret }));
+  showMsg('success', '✓ Configuration saved successfully!');
+}
+
+function clearConfig() {
+  if (!confirm('Are you sure you want to clear Cloudinary configuration?')) return;
+  localStorage.removeItem('cloudinary_config');
+  document.getElementById('cloudName').value = '';
+  document.getElementById('apiKey').value = '';
+  document.getElementById('apiSecret').value = '';
+  showMsg('success', 'Configuration cleared.');
+}
+
+function showMsg(type, text) {
+  const el = document.getElementById('statusMsg');
+  el.className = `status-msg ${type} show`;
+  el.textContent = text;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
