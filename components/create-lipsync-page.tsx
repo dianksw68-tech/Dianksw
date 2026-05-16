@@ -193,35 +193,162 @@ export function CreateLipSyncPage() {
     // Start processing
     setProcessing(true, 0, 0)
 
-    // Simulate processing steps
-    const steps = [
-      { step: 0, duration: 2000, progress: 20 },
-      { step: 1, duration: 3000, progress: 45 },
-      { step: 2, duration: 4000, progress: 75 },
-      { step: 3, duration: 3000, progress: 100 },
-    ]
+    try {
+      // Step 1: Upload image
+      setProcessing(true, 0, 10)
+      toast({ title: "Uploading image...", description: "Preparing your character image" })
+      
+      const imageBlob = await fetch(characterImage).then(r => r.blob())
+      const imageFormData = new FormData()
+      imageFormData.append('file', imageBlob, 'character.jpg')
+      imageFormData.append('type', 'image')
+      
+      const imageUploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: imageFormData,
+      })
+      
+      if (!imageUploadRes.ok) {
+        throw new Error('Failed to upload image')
+      }
+      
+      const imageData = await imageUploadRes.json()
+      const imageUrl = imageData.absoluteUrl
+      
+      // Step 2: Upload audio
+      setProcessing(true, 1, 30)
+      toast({ title: "Uploading audio...", description: "Preparing your audio file" })
+      
+      let audioUrl: string
+      
+      if (audioFile) {
+        const audioBlob = await fetch(audioFile).then(r => r.blob())
+        const audioFormData = new FormData()
+        audioFormData.append('file', audioBlob, audioFileName || 'audio.mp3')
+        audioFormData.append('type', 'audio')
+        
+        const audioUploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: audioFormData,
+        })
+        
+        if (!audioUploadRes.ok) {
+          throw new Error('Failed to upload audio')
+        }
+        
+        const audioData = await audioUploadRes.json()
+        audioUrl = audioData.absoluteUrl
+      } else {
+        // TTS not implemented yet - would need a TTS API
+        throw new Error('Text-to-Speech is not implemented yet. Please upload an audio file.')
+      }
+      
+      // Step 3: Call Magnific API
+      setProcessing(true, 2, 50)
+      toast({ title: "Generating lip sync...", description: "AI is processing your video" })
+      
+      const resolution = lipSyncSettings.quality === 'high' ? '1080p' : '720p'
+      const turboMode = lipSyncSettings.quality === 'fast'
+      
+      const lipSyncRes = await fetch('/api/lipsync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          audioUrl,
+          prompt: prompt || `A person speaking naturally with ${lipSyncSettings.emotion} expression`,
+          resolution,
+          turboMode,
+          apiKey,
+        }),
+      })
+      
+      const lipSyncData = await lipSyncRes.json()
+      
+      if (!lipSyncRes.ok) {
+        throw new Error(lipSyncData.error || 'Failed to create lip sync task')
+      }
+      
+      const taskId = lipSyncData.data?.task_id
+      
+      if (!taskId) {
+        throw new Error('No task ID received from API')
+      }
+      
+      // Step 4: Poll for completion
+      setProcessing(true, 3, 70)
+      toast({ title: "Processing video...", description: "This may take a few minutes" })
+      
+      let status = 'IN_PROGRESS'
+      let videoUrl = ''
+      let attempts = 0
+      const maxAttempts = 120 // 10 minutes max (5 second intervals)
+      
+      while (status === 'CREATED' || status === 'IN_PROGRESS') {
+        await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds
+        
+        const statusRes = await fetch(`/api/lipsync?taskId=${taskId}&apiKey=${encodeURIComponent(apiKey)}`)
+        const statusData = await statusRes.json()
+        
+        if (!statusRes.ok) {
+          throw new Error(statusData.error || 'Failed to check task status')
+        }
+        
+        status = statusData.data?.status || 'FAILED'
+        
+        if (status === 'COMPLETED' && statusData.data?.generated?.length > 0) {
+          videoUrl = statusData.data.generated[0]
+        }
+        
+        // Update progress
+        const progress = Math.min(70 + (attempts * 0.5), 95)
+        setProcessing(true, 3, progress)
+        
+        attempts++
+        if (attempts >= maxAttempts) {
+          throw new Error('Processing timed out. Please try again.')
+        }
+      }
+      
+      if (status === 'FAILED' || !videoUrl) {
+        throw new Error('Video generation failed. Please try again.')
+      }
+      
+      // Success!
+      setProcessing(true, 3, 100)
+      
+      const newProject = {
+        id: `project-${Date.now()}`,
+        thumbnail: characterImage,
+        date: new Date().toISOString().split("T")[0],
+        duration: lipSyncSettings.videoDuration === "auto" ? "0:30" : lipSyncSettings.videoDuration.replace("s", ""),
+        status: "completed" as const,
+        prompt,
+        settings: lipSyncSettings,
+        videoUrl,
+        taskId,
+      }
 
-    for (const { step, duration, progress } of steps) {
-      setProcessing(true, step, progress)
-      await new Promise((resolve) => setTimeout(resolve, duration))
+      addProject(newProject)
+      setCurrentResult(newProject)
+      setProcessing(false)
+      
+      toast({
+        title: "Success!",
+        description: "Your lip sync video has been generated.",
+      })
+      
+      setCurrentPage("result")
+      
+    } catch (error) {
+      console.error('Lip sync generation error:', error)
+      setProcessing(false)
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
     }
-
-    // Create result
-    const newProject = {
-      id: `project-${Date.now()}`,
-      thumbnail: characterImage,
-      date: new Date().toISOString().split("T")[0],
-      duration: lipSyncSettings.videoDuration === "auto" ? "0:30" : lipSyncSettings.videoDuration.replace("s", ""),
-      status: "completed" as const,
-      prompt,
-      settings: lipSyncSettings,
-      videoUrl: "https://example.com/generated-video.mp4",
-    }
-
-    addProject(newProject)
-    setCurrentResult(newProject)
-    setProcessing(false)
-    setCurrentPage("result")
   }
 
   return (

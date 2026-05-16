@@ -12,6 +12,7 @@ export interface Project {
   prompt: string
   settings: LipSyncSettings
   videoUrl?: string
+  taskId?: string
 }
 
 export interface LipSyncSettings {

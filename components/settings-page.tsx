@@ -234,11 +234,11 @@ export function SettingsPage() {
             variant="outline"
             className="w-full mt-4 h-11 rounded-xl"
             onClick={() =>
-              window.open("https://magnific.ai", "_blank", "noopener")
+              window.open("https://www.magnific.com/profile/api-keys", "_blank", "noopener")
             }
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Open Developer Dashboard
+            Open Magnific API Keys
           </Button>
         </Card>
       </motion.div>

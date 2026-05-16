@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/lib/store"
 import {
@@ -26,6 +26,7 @@ export function ResultPage() {
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   if (!currentResult) {
     return (
@@ -50,11 +51,36 @@ export function ResultPage() {
     })
   }
 
-  const handleDownload = () => {
-    toast({
-      title: "Download Started",
-      description: "Your video will download shortly.",
-    })
+  const handleDownload = async () => {
+    if (!currentResult.videoUrl) {
+      toast({
+        title: "No Video",
+        description: "Video URL is not available.",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    try {
+      toast({
+        title: "Download Started",
+        description: "Your video will download shortly.",
+      })
+      
+      const response = await fetch(currentResult.videoUrl)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `lipsync-${currentResult.id}.mp4`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch {
+      // Fallback: open in new tab
+      window.open(currentResult.videoUrl, '_blank')
+    }
   }
 
   const handleShare = () => {
@@ -136,7 +162,33 @@ export function ResultPage() {
       >
         <Card className="glass-card border-0 overflow-hidden">
           <div className="relative aspect-video bg-secondary">
-            {currentResult.thumbnail ? (
+            {currentResult.videoUrl ? (
+              <>
+                <video
+                  ref={videoRef}
+                  src={currentResult.videoUrl}
+                  poster={currentResult.thumbnail}
+                  className="w-full h-full object-cover"
+                  controls={isPlaying}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                />
+                {!isPlaying && (
+                  <button
+                    onClick={() => {
+                      videoRef.current?.play()
+                      setIsPlaying(true)
+                    }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+                  >
+                    <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center neon-glow">
+                      <Play className="w-8 h-8 text-primary-foreground ml-1" />
+                    </div>
+                  </button>
+                )}
+              </>
+            ) : currentResult.thumbnail ? (
               <img
                 src={currentResult.thumbnail}
                 alt="Video thumbnail"
@@ -147,20 +199,6 @@ export function ResultPage() {
                 <Play className="w-16 h-16 text-muted-foreground/30" />
               </div>
             )}
-            
-            {/* Play button overlay */}
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
-            >
-              <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center neon-glow">
-                {isPlaying ? (
-                  <Pause className="w-8 h-8 text-primary-foreground" />
-                ) : (
-                  <Play className="w-8 h-8 text-primary-foreground ml-1" />
-                )}
-              </div>
-            </button>
 
             {/* Duration badge */}
             <div className="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/60 text-xs">
