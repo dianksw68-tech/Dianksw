@@ -181,53 +181,5 @@ export const promptPresets = [
   },
 ]
 
-// Demo projects
-export const demoProjects: Project[] = [
-  {
-    id: "demo-1",
-    thumbnail: "/placeholder-video-1.jpg",
-    date: "2024-01-15",
-    duration: "0:32",
-    status: "completed",
-    prompt: "Cinematic lighting, dramatic expression",
-    settings: {
-      expressionIntensity: 75,
-      mouthAccuracy: 85,
-      emotion: "happy",
-      videoDuration: "30s",
-      quality: "high",
-    },
-    videoUrl: "https://example.com/video1.mp4",
-  },
-  {
-    id: "demo-2",
-    thumbnail: "/placeholder-video-2.jpg",
-    date: "2024-01-14",
-    duration: "1:05",
-    status: "completed",
-    prompt: "Natural conversation style",
-    settings: {
-      expressionIntensity: 60,
-      mouthAccuracy: 80,
-      emotion: "neutral",
-      videoDuration: "60s",
-      quality: "balanced",
-    },
-    videoUrl: "https://example.com/video2.mp4",
-  },
-  {
-    id: "demo-3",
-    thumbnail: "/placeholder-video-3.jpg",
-    date: "2024-01-13",
-    duration: "0:15",
-    status: "processing",
-    prompt: "Energetic social media style",
-    settings: {
-      expressionIntensity: 90,
-      mouthAccuracy: 75,
-      emotion: "excited",
-      videoDuration: "15s",
-      quality: "fast",
-    },
-  },
-]
+// Demo projects - empty to avoid placeholder errors
+export const demoProjects: Project[] = []

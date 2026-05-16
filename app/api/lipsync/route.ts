@@ -16,11 +16,7 @@ export async function POST(request: NextRequest) {
 
     // If taskId is provided, this is a status check request using GET
     if (taskId) {
-      console.log('[v0] Checking task status for:', taskId)
-      const statusUrl = `${MAGNIFIC_API_URL}/${taskId}`
-      console.log('[v0] Status URL:', statusUrl)
-      
-      const response = await fetch(statusUrl, {
+      const response = await fetch(`${MAGNIFIC_API_URL}/${taskId}`, {
         method: 'GET',
         headers: {
           'x-magnific-api-key': apiKey,
@@ -28,7 +24,6 @@ export async function POST(request: NextRequest) {
       })
 
       const data = await response.json()
-      console.log('[v0] Status response:', response.status, JSON.stringify(data))
 
       if (!response.ok) {
         return NextResponse.json(
@@ -48,30 +43,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[v0] Creating new lip sync task')
-    console.log('[v0] Image URL:', imageUrl)
-    console.log('[v0] Audio URL:', audioUrl)
-
-    const requestBody = {
-      image_url: imageUrl,
-      audio_url: audioUrl,
-      prompt: prompt || 'A person speaking naturally with subtle head movements',
-      resolution: resolution || '1080p',
-      turbo_mode: turboMode || false,
-    }
-    console.log('[v0] Request body:', JSON.stringify(requestBody))
-
     const response = await fetch(MAGNIFIC_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-magnific-api-key': apiKey,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        image_url: imageUrl,
+        audio_url: audioUrl,
+        prompt: prompt || 'A person speaking naturally with subtle head movements',
+        resolution: resolution || '1080p',
+        turbo_mode: turboMode || false,
+      }),
     })
 
     const data = await response.json()
-    console.log('[v0] Create task response:', response.status, JSON.stringify(data))
 
     if (!response.ok) {
       return NextResponse.json(
