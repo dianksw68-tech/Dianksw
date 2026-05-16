@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { put } from '@vercel/blob'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,38 +14,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', type)
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
     const randomString = Math.random().toString(36).substring(2, 8)
     const extension = file.name.split('.').pop() || (type === 'image' ? 'jpg' : 'mp3')
-    const filename = `${timestamp}-${randomString}.${extension}`
-    const filepath = join(uploadsDir, filename)
+    const filename = `lipsync/${type}/${timestamp}-${randomString}.${extension}`
 
-    await writeFile(filepath, buffer)
-
-    // Return the public URL
-    const publicUrl = `/uploads/${type}/${filename}`
-    
-    // For Magnific API, we need an absolute URL
-    // In production, this would be the deployed URL
-    const host = request.headers.get('host') || 'localhost:3000'
-    const protocol = request.headers.get('x-forwarded-proto') || 'http'
-    const absoluteUrl = `${protocol}://${host}${publicUrl}`
+    // Upload to Vercel Blob with public access
+    // Public access is required because Magnific API needs to fetch the files
+    const blob = await put(filename, file, {
+      access: 'public',
+      contentType: file.type,
+    })
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
-      absoluteUrl: absoluteUrl,
+      url: blob.url,
+      absoluteUrl: blob.url, // Vercel Blob URLs are already absolute and public
       filename: filename,
+      pathname: blob.pathname,
     })
   } catch (error) {
     console.error('Upload error:', error)
@@ -56,10 +41,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
 }

@@ -287,7 +287,11 @@ export function CreateLipSyncPage() {
       while (status === 'CREATED' || status === 'IN_PROGRESS') {
         await new Promise(resolve => setTimeout(resolve, 5000)) // Wait 5 seconds
         
-        const statusRes = await fetch(`/api/lipsync?taskId=${taskId}&apiKey=${encodeURIComponent(apiKey)}`)
+        const statusRes = await fetch('/api/lipsync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId, apiKey }),
+        })
         const statusData = await statusRes.json()
         
         if (!statusRes.ok) {
