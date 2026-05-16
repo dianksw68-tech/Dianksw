@@ -14,20 +14,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If taskId is provided, this is a status check request
+    // If taskId is provided, this is a status check request using GET
     if (taskId) {
-      const response = await fetch(MAGNIFIC_API_URL, {
-        method: 'POST',
+      console.log('[v0] Checking task status for:', taskId)
+      const statusUrl = `${MAGNIFIC_API_URL}/${taskId}`
+      console.log('[v0] Status URL:', statusUrl)
+      
+      const response = await fetch(statusUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'x-magnific-api-key': apiKey,
         },
-        body: JSON.stringify({
-          task_id: taskId,
-        }),
       })
 
       const data = await response.json()
+      console.log('[v0] Status response:', response.status, JSON.stringify(data))
 
       if (!response.ok) {
         return NextResponse.json(
@@ -47,22 +48,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[v0] Creating new lip sync task')
+    console.log('[v0] Image URL:', imageUrl)
+    console.log('[v0] Audio URL:', audioUrl)
+
+    const requestBody = {
+      image_url: imageUrl,
+      audio_url: audioUrl,
+      prompt: prompt || 'A person speaking naturally with subtle head movements',
+      resolution: resolution || '1080p',
+      turbo_mode: turboMode || false,
+    }
+    console.log('[v0] Request body:', JSON.stringify(requestBody))
+
     const response = await fetch(MAGNIFIC_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-magnific-api-key': apiKey,
       },
-      body: JSON.stringify({
-        image_url: imageUrl,
-        audio_url: audioUrl,
-        prompt: prompt || 'A person speaking naturally with subtle head movements',
-        resolution: resolution || '1080p',
-        turbo_mode: turboMode || false,
-      }),
+      body: JSON.stringify(requestBody),
     })
 
     const data = await response.json()
+    console.log('[v0] Create task response:', response.status, JSON.stringify(data))
 
     if (!response.ok) {
       return NextResponse.json(
