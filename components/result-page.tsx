@@ -26,6 +26,7 @@ export function ResultPage() {
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [videoError, setVideoError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   if (!currentResult) {
@@ -162,7 +163,7 @@ export function ResultPage() {
       >
         <Card className="glass-card border-0 overflow-hidden">
           <div className="relative aspect-video bg-secondary">
-            {currentResult.videoUrl ? (
+            {currentResult.videoUrl && !videoError ? (
               <>
                 <video
                   ref={videoRef}
@@ -173,11 +174,12 @@ export function ResultPage() {
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   onEnded={() => setIsPlaying(false)}
+                  onError={() => setVideoError(true)}
                 />
                 {!isPlaying && (
                   <button
                     onClick={() => {
-                      videoRef.current?.play()
+                      videoRef.current?.play().catch(() => setVideoError(true))
                       setIsPlaying(true)
                     }}
                     className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"

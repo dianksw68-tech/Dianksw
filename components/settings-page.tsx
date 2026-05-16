@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Check,
   Copy,
+  Trash2,
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 export function SettingsPage() {
-  const { apiKey, setApiKey, setCurrentPage } = useAppStore()
+  const { apiKey, setApiKey, setCurrentPage, clearAllProjects, projects } = useAppStore()
   const { toast } = useToast()
   const [localKey, setLocalKey] = useState(apiKey)
   const [showKey, setShowKey] = useState(false)
@@ -272,6 +273,41 @@ export function SettingsPage() {
                 Key: ****{apiKey.slice(-4)}
               </span>
             )}
+          </div>
+        </Card>
+      </motion.div>
+
+      {/* Clear Projects Section */}
+      <motion.div
+        className="mt-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.4 }}
+      >
+        <Card className="p-4 glass-card border-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium">Clear Project History</h4>
+              <p className="text-xs text-muted-foreground">
+                {projects.length} project{projects.length !== 1 ? "s" : ""} stored locally
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                clearAllProjects()
+                toast({
+                  title: "Projects Cleared",
+                  description: "All project history has been removed.",
+                })
+              }}
+              disabled={projects.length === 0}
+              className="rounded-xl"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Clear All
+            </Button>
           </div>
         </Card>
       </motion.div>

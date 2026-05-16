@@ -67,6 +67,7 @@ interface AppState {
   projects: Project[]
   addProject: (project: Project) => void
   removeProject: (id: string) => void
+  clearAllProjects: () => void
   
   // Current Result
   currentResult: Project | null
@@ -135,6 +136,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           projects: state.projects.filter((p) => p.id !== id),
         })),
+      clearAllProjects: () => set({ projects: [] }),
       
       // Current Result
       currentResult: null,
